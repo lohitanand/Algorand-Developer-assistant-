@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorand Developer Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #020D19;
+            --algorand-teal: #00C9C9;
+            --dark-gradient: linear-gradient(152.97deg, rgba(0, 0, 0, 0.5) 0%, rgba(21, 22, 24, 0.5) 100%);
+            --background: #0A1929;
+            --text-primary: #E6F1FF;
+            --text-secondary: #8892B0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-blue);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            padding: 4rem 0;
+            background: var(--dark-gradient);
+            backdrop-filter: blur(16px);
+            margin-bottom: 3rem;
+            border-bottom: 1px solid rgba(0, 201, 201, 0.1);
+        }
+
+        .chat-section {
+            background: var(--dark-gradient);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(0, 201, 201, 0.1);
+        }
+
+        .chat-history {
+            height: 500px;
+            overflow-y: auto;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            background: rgba(2, 13, 25, 0.7);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 201, 201, 0.1);
+        }
+
+        .message {
+            margin-bottom: 1.5rem;
+            padding: 1.2rem;
+            border-radius: 8px;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .user-message {
+            background: rgba(0, 201, 201, 0.1);
+            border: 1px solid var(--algorand-teal);
+            margin-left: auto;
+        }
+
+        .bot-message {
+            background: rgba(2, 13, 25, 0.9);
+            border: 1px solid rgba(0, 201, 201, 0.2);
+            margin-right: auto;
+        }
+
+        .input-group {
+            display: grid;
+            gap: 1rem;
+            position: relative;
+        }
+
+        input, textarea, button {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        input, textarea {
+            background: rgba(2, 13, 25, 0.7);
+            color: var(--text-primary);
+            border: 1px solid rgba(0, 201, 201, 0.2);
+            width: 100%;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--algorand-teal);
+            box-shadow: 0 0 0 3px rgba(0, 201, 201, 0.1);
+        }
+
+        button {
+            background: var(--algorand-teal);
+            color: var(--primary-blue);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 201, 201, 0.2);
+        }
+
+        .teal-section {
+            background: var(--dark-gradient);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(0, 201, 201, 0.1);
+        }
+
+        #compileResult {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(2, 13, 25, 0.7);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 201, 201, 0.2);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .chat-history {
+                height: 60vh;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Algorand Developer Assistant</h1>
+        <p class="text-secondary">Your AI-powered Algorand development companion</p>
+    </header>
+
+    <div class="container">
+        <section class="chat-section">
+            <div class="chat-history" id="chatHistory">
+                <div class="message bot-message">
+                    👋 Welcome! I'm your Algorand development assistant. How can I help you today?
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="addressInput" placeholder="Algorand Address (Optional)">
+                <div style="position: relative;">
+                    <input type="text" id="messageInput" placeholder="Ask about smart contracts, ASAs, or network status...">
+                    <button onclick="sendMessage()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); padding: 0.5rem 1.5rem;">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="teal-section">
+            <h2 style="margin-bottom: 1.5rem;">TEAL Compiler</h2>
+            <div class="input-group">
+                <textarea id="tealCode" rows="8" placeholder="Enter your TEAL code here..."></textarea>
+                <button onclick="compileTEAL()">Compile Smart Contract</button>
+                <div id="compileResult"></div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Initialize chat history array
+        let chatHistory = [];
+
+        function addMessage(content, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            messageDiv.textContent = content;
+            document.getElementById('chatHistory').appendChild(messageDiv);
+            
+            // Scroll to bottom
+            const container = document.getElementById('chatHistory');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const addressInput = document.getElementById('addressInput');
+            const message = messageInput.value.trim();
+            const address = addressInput.value.trim();
+
+            if (!message) return;
+
+            // Add user message to chat
+            addMessage(message, 'user');
+
+            try {
+                const response = await fetch('http://localhost:8000/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        address: address || null
+                    })
+                });
+
+                const data = await response.json();
+                addMessage(data.response, 'bot');
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Sorry, there was an error processing your request.', 'bot');
+            }
+
+            // Clear input
+            messageInput.value = '';
+        }
+
+        async function compileTEAL() {
+            const tealCode = document.getElementById('tealCode').value.trim();
+            const compileResult = document.getElementById('compileResult');
+
+            if (!tealCode) {
+                compileResult.innerHTML = 'Please enter TEAL code';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/compile-teal', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ teal_code: tealCode })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    compileResult.innerHTML = `
+                        <h3 style="color: var(--algorand-teal);">Compilation Successful</h3>
+                        <p><strong>Hash:</strong> ${data.hash}</p>
+                        <p><strong>Bytecode:</strong> ${data.bytecode}</p>
+                    `;
+                } else {
+                    compileResult.innerHTML = `<p style="color: #ff4444;">Compilation failed: ${data.detail}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                compileResult.innerHTML = `<p style="color: #ff4444;">Error: Could not compile TEAL code</p>`;
+            }
+        }
+
+        // Add keyboard support
+        document.getElementById('messageInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();  // Prevent default enter behavior
+        sendMessage();
+    }
+});
+    </script>
+</body>
+</html>
