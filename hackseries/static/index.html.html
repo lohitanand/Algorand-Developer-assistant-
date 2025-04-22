@@ -13,6 +13,9 @@
             --background: #0A1929;
             --text-primary: #E6F1FF;
             --text-secondary: #8892B0;
+            --message-user-bg: rgba(0, 201, 201, 0.1);
+            --message-bot-bg: rgba(2, 13, 25, 0.9);
+            --sidebar-width: 280px;
         }
 
         * {
@@ -26,110 +29,412 @@
             background: var(--primary-blue);
             color: var(--text-primary);
             line-height: 1.6;
-            min-height: 100vh;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        .header {
-            text-align: center;
-            padding: 4rem 0;
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
             background: var(--dark-gradient);
             backdrop-filter: blur(16px);
-            margin-bottom: 3rem;
+            border-right: 1px solid rgba(0, 201, 201, 0.1);
+            height: 100vh;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
             border-bottom: 1px solid rgba(0, 201, 201, 0.1);
         }
 
-        .chat-section {
-            background: var(--dark-gradient);
-            backdrop-filter: blur(16px);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(0, 201, 201, 0.1);
+        .logo {
+            height: 40px;
+            margin-right: 10px;
         }
 
-        .chat-history {
-            height: 500px;
-            overflow-y: auto;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            background: rgba(2, 13, 25, 0.7);
+        .sidebar-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .new-chat-btn {
+            background: var(--algorand-teal);
+            color: var(--primary-blue);
+            border: none;
+            padding: 0.7rem 1rem;
             border-radius: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .new-chat-btn:hover {
+            background: #00b5b5;
+            transform: translateY(-1px);
+        }
+
+        .chat-history-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            padding: 0.7rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-secondary);
+        }
+
+        .chat-item:hover {
+            background: rgba(0, 201, 201, 0.05);
+        }
+
+        .chat-item.active {
+            background: rgba(0, 201, 201, 0.1);
+            color: var(--text-primary);
+            border-left: 3px solid var(--algorand-teal);
+        }
+
+        .sidebar-footer {
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0, 201, 201, 0.1);
+        }
+
+        .tools-section {
+            margin-bottom: 1rem;
+        }
+
+        .tools-title {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .tool-button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.7rem 1rem;
+            background: rgba(0, 201, 201, 0.05);
             border: 1px solid rgba(0, 201, 201, 0.1);
+            border-radius: 8px;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tool-button:hover {
+            background: rgba(0, 201, 201, 0.1);
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem 15% 7rem 15%;
+            scroll-behavior: smooth;
+        }
+
+        @media (max-width: 1200px) {
+            .chat-container {
+                padding: 2rem 10% 7rem 10%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                padding: 2rem 1rem 7rem 1rem;
+            }
+        }
+
+        .message-wrapper {
+            display: flex;
+            margin-bottom: 1.5rem;
         }
 
         .message {
-            margin-bottom: 1.5rem;
             padding: 1.2rem;
-            border-radius: 8px;
-            max-width: 80%;
+            border-radius: 12px;
+            max-width: 100%;
             animation: fadeIn 0.3s ease-in;
         }
 
         .user-message {
-            background: rgba(0, 201, 201, 0.1);
+            background: var(--message-user-bg);
             border: 1px solid var(--algorand-teal);
-            margin-left: auto;
         }
 
         .bot-message {
-            background: rgba(2, 13, 25, 0.9);
+            background: var(--message-bot-bg);
             border: 1px solid rgba(0, 201, 201, 0.2);
-            margin-right: auto;
         }
 
-        .input-group {
-            display: grid;
-            gap: 1rem;
+        .message-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            background: var(--algorand-teal);
+            color: var(--primary-blue);
+        }
+
+        .bot-avatar {
+            background: #3A3F44;
+            color: var(--algorand-teal);
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        /* Input Area Styles */
+        .input-area {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem 15%;
+            background: var(--primary-blue);
+            border-top: 1px solid rgba(0, 201, 201, 0.1);
+        }
+
+        @media (max-width: 1200px) {
+            .input-area {
+                padding: 1.5rem 10%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .input-area {
+                padding: 1rem;
+            }
+        }
+
+        .input-container {
             position: relative;
-        }
-
-        input, textarea, button {
-            padding: 1rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        input, textarea {
-            background: rgba(2, 13, 25, 0.7);
-            color: var(--text-primary);
+            border-radius: 12px;
+            background: rgba(0, 201, 201, 0.05);
             border: 1px solid rgba(0, 201, 201, 0.2);
-            width: 100%;
+            transition: all 0.3s ease;
         }
 
-        input:focus, textarea:focus {
-            outline: none;
+        .input-container:focus-within {
             border-color: var(--algorand-teal);
             box-shadow: 0 0 0 3px rgba(0, 201, 201, 0.1);
         }
 
-        button {
+        #messageInput {
+            width: 100%;
+            padding: 1rem;
+            padding-right: 50px;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1rem;
+            resize: none;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        #messageInput:focus {
+            outline: none;
+        }
+
+        .send-button {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
             background: var(--algorand-teal);
             color: var(--primary-blue);
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .send-button:hover {
+            background: #00b5b5;
+            transform: scale(1.05);
+        }
+
+        .send-icon {
+            width: 16px;
+            height: 16px;
+            fill: var(--primary-blue);
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .welcome-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 2rem;
+        }
+
+        .welcome-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, #E6F1FF, var(--algorand-teal));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .welcome-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            max-width: 600px;
+        }
+
+        .suggestion-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .suggestion-card {
+            background: var(--dark-gradient);
+            border: 1px solid rgba(0, 201, 201, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .suggestion-card:hover {
+            border-color: var(--algorand-teal);
+            transform: translateY(-2px);
+        }
+
+        .suggestion-title {
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            color: var(--algorand-teal);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--primary-blue);
+            border: 1px solid rgba(0, 201, 201, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(0, 201, 201, 0.1);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
             cursor: pointer;
         }
 
-        button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 201, 201, 0.2);
+        textarea {
+            background: rgba(2, 13, 25, 0.7);
+            color: var(--text-primary);
+            border: 1px solid rgba(0, 201, 201, 0.2);
+            width: 100%;
+            padding: 1rem;
+            border-radius: 8px;
+            resize: vertical;
+            min-height: 200px;
+            font-family: 'Courier New', monospace;
         }
 
-        .teal-section {
-            background: var(--dark-gradient);
-            backdrop-filter: blur(16px);
-            border-radius: 16px;
-            padding: 2rem;
-            border: 1px solid rgba(0, 201, 201, 0.1);
+        textarea:focus {
+            outline: none;
+            border-color: var(--algorand-teal);
+        }
+
+        .compile-button {
+            background: var(--algorand-teal);
+            color: var(--primary-blue);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .compile-button:hover {
+            background: #00b5b5;
         }
 
         #compileResult {
@@ -140,152 +445,824 @@
             border: 1px solid rgba(0, 201, 201, 0.2);
         }
 
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                z-index: 100;
+                transition: left 0.3s ease;
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .menu-toggle {
+                display: block;
+                position: fixed;
+                top: 15px;
+                left: 15px;
+                background: rgba(0, 201, 201, 0.1);
+                border: none;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                color: var(--text-primary);
+                z-index: 101;
+                cursor: pointer;
+            }
+
+            .overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 99;
+            }
+
+            .overlay.show {
+                display: block;
+            }
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-            
-            .chat-history {
-                height: 60vh;
-            }
-            
-            .message {
-                max-width: 90%;
-            }
+        /* Markdown styling */
+        .bot-message pre {
+            background: rgba(2, 13, 25, 0.9);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid rgba(0, 201, 201, 0.2);
+            margin: 1rem 0;
+        }
+
+        .bot-message code {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 201, 201, 0.05);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .bot-message pre code {
+            background: transparent;
+            padding: 0;
+            color: #e6f1ff;
+        }
+
+        .bot-message a {
+            color: var(--algorand-teal);
+            text-decoration: none;
+        }
+
+        .bot-message a:hover {
+            text-decoration: underline;
+        }
+
+        .bot-message p {
+            margin-bottom: 1rem;
+        }
+
+        .bot-message ul, .bot-message ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <h1>Algorand Developer Assistant</h1>
-        <p class="text-secondary">Your AI-powered Algorand development companion</p>
-    </header>
+    <!-- Mobile Menu Toggle -->
+    <button class="menu-toggle" id="menuToggle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+    <div class="overlay" id="overlay"></div>
 
-    <div class="container">
-        <section class="chat-section">
-            <div class="chat-history" id="chatHistory">
-                <div class="message bot-message">
-                    👋 Welcome! I'm your Algorand development assistant. How can I help you today?
-                </div>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <svg class="logo" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="20" cy="20" r="20" fill="#00C9C9" fill-opacity="0.1"/>
+                <path d="M20 10L26.7942 20L20 30L13.2058 20L20 10Z" fill="#00C9C9"/>
+            </svg>
+            <span class="sidebar-title">Algorand Assistant</span>
+        </div>
+
+        <button class="new-chat-btn" id="newChatBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            New Chat
+        </button>
+
+        <div class="chat-history-list" id="chatHistoryList">
+            <!-- Chat history items will be added here -->
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="tools-section">
+                <p class="tools-title">TOOLS</p>
+                <button class="tool-button" id="tealCompilerBtn">TEAL Compiler</button>
+                <button class="tool-button" id="clearHistoryBtn">Clear All Chats</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Welcome Screen (shown by default) -->
+        <div class="welcome-screen" id="welcomeScreen">
+            <svg class="welcome-logo" width="80" height="80" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="20" cy="20" r="20" fill="#00C9C9" fill-opacity="0.1"/>
+                <path d="M20 10L26.7942 20L20 30L13.2058 20L20 10Z" fill="#00C9C9"/>
+            </svg>
+            <h1 class="welcome-title">Algorand Developer Assistant</h1>
+            <p class="welcome-subtitle">Your AI-powered companion for Algorand blockchain development. Ask questions about smart contracts, ASAs, or get help with your code.</p>
             
-            <div class="input-group">
-                <input type="text" id="addressInput" placeholder="Algorand Address (Optional)">
-                <div style="position: relative;">
-                    <input type="text" id="messageInput" placeholder="Ask about smart contracts, ASAs, or network status...">
-                    <button onclick="sendMessage()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); padding: 0.5rem 1.5rem;">
-                        Send
-                    </button>
+            <div class="suggestion-grid">
+                <div class="suggestion-card" onclick="useExample('How do I create an ASA using Python?')">
+                    <h3 class="suggestion-title">Create an ASA</h3>
+                    <p>Learn how to create Algorand Standard Assets using Python SDK</p>
+                </div>
+                <div class="suggestion-card" onclick="useExample('Explain Algorand\'s consensus mechanism')">
+                    <h3 class="suggestion-title">Consensus Mechanism</h3>
+                    <p>Understand how Algorand's Pure Proof-of-Stake consensus works</p>
+                </div>
+                <div class="suggestion-card" onclick="useExample('Help me write a simple PyTeal contract')">
+                    <h3 class="suggestion-title">Smart Contracts</h3>
+                    <p>Get help writing a basic smart contract with PyTeal</p>
+                </div>
+                <div class="suggestion-card" onclick="useExample('How do atomic transfers work in Algorand?')">
+                    <h3 class="suggestion-title">Atomic Transfers</h3>
+                    <p>Learn about atomic transfers for multi-party transactions</p>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <section class="teal-section">
-            <h2 style="margin-bottom: 1.5rem;">TEAL Compiler</h2>
-            <div class="input-group">
-                <textarea id="tealCode" rows="8" placeholder="Enter your TEAL code here..."></textarea>
-                <button onclick="compileTEAL()">Compile Smart Contract</button>
-                <div id="compileResult"></div>
+        <!-- Chat Container (hidden by default) -->
+        <div class="chat-container" id="chatContainer" style="display: none;">
+            <!-- Messages will be added here -->
+        </div>
+
+        <!-- Input Area (hidden by default) -->
+        <div class="input-area" id="inputArea" style="display: none;">
+            <div class="input-container">
+                <textarea id="messageInput" placeholder="Ask about Algorand development..." rows="1"></textarea>
+                <button class="send-button" onclick="sendMessage()">
+                    <svg class="send-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                </button>
             </div>
-        </section>
+        </div>
+    </div>
+
+    <!-- TEAL Compiler Modal -->
+    <div class="modal" id="tealModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>TEAL Smart Contract Compiler</h2>
+                <button class="close-modal" id="closeTealModal">&times;</button>
+            </div>
+            <p style="margin-bottom: 1rem; color: var(--text-secondary);">Write or paste your TEAL code below to compile it.</p>
+            <textarea id="tealCode" rows="10" placeholder="Enter your TEAL code here..."></textarea>
+            <button class="compile-button" onclick="compileTEAL()">Compile Smart Contract</button>
+            <div id="compileResult"></div>
+        </div>
     </div>
 
     <script>
-        // Initialize chat history array
+        // Initialize chat storage
+        let chats = JSON.parse(localStorage.getItem('algorand_chats') || '{}');
+        let currentChatId = null;
         let chatHistory = [];
 
+        // Handle auto-resize of textarea
+        const messageInput = document.getElementById('messageInput');
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            // Cap the height
+            if (parseInt(this.style.height) > 150) {
+                this.style.height = '150px';
+            }
+        });
+
+        // Show/hide sidebar on mobile
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('overlay').classList.toggle('show');
+        });
+
+        document.getElementById('overlay').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.remove('show');
+            document.getElementById('overlay').classList.remove('show');
+        });
+
+        // Create new chat
+        document.getElementById('newChatBtn').addEventListener('click', createNewChat);
+
+        function createNewChat() {
+            // Generate a unique ID
+            const chatId = 'chat_' + Date.now();
+            
+            // Create new chat object
+            chats[chatId] = {
+                id: chatId,
+                title: 'New Chat',
+                messages: [],
+                created: new Date().toISOString()
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('algorand_chats', JSON.stringify(chats));
+            
+            // Set as current chat and render
+            setCurrentChat(chatId);
+            renderChatList();
+            
+            // Hide welcome screen, show chat
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('chatContainer').style.display = 'block';
+            document.getElementById('inputArea').style.display = 'block';
+
+            // Focus on input
+            document.getElementById('messageInput').focus();
+
+            // Close sidebar on mobile
+            document.getElementById('sidebar').classList.remove('show');
+            document.getElementById('overlay').classList.remove('show');
+        }
+
+        // Set current chat
+        function setCurrentChat(chatId) {
+            currentChatId = chatId;
+            chatHistory = chats[chatId].messages || [];
+            
+            // Render messages
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.innerHTML = '';
+            
+            if (chatHistory.length === 0) {
+                // Add welcome message
+                addMessage('👋 Welcome! I\'m your Algorand development assistant. How can I help you today?', 'bot');
+            } else {
+                // Render existing messages
+                chatHistory.forEach(msg => {
+                    if (msg.role === 'user') {
+                        addMessage(msg.content, 'user');
+                    } else if (msg.role === 'assistant') {
+                        addMessage(msg.content, 'bot');
+                    }
+                });
+            }
+            
+            // Update active chat in sidebar
+            const chatItems = document.querySelectorAll('.chat-item');
+            chatItems.forEach(item => {
+                if (item.dataset.chatId === chatId) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        // Render chat list in sidebar
+        function renderChatList() {
+            const chatList = document.getElementById('chatHistoryList');
+            chatList.innerHTML = '';
+            
+            // Sort chats by creation time (newest first)
+            const sortedChats = Object.values(chats).sort((a, b) => 
+                new Date(b.created) - new Date(a.created)
+            );
+            
+            sortedChats.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.className = 'chat-item' + (chat.id === currentChatId ? ' active' : '');
+                chatItem.dataset.chatId = chat.id;
+                
+                // Use first message as title or default
+                let title = 'New Chat';
+                if (chat.messages && chat.messages.length > 0) {
+                    const firstUserMsg = chat.messages.find(m => m.role === 'user');
+                    if (firstUserMsg) {
+                        title = firstUserMsg.content.substring(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '');
+                    }
+                }
+                
+                chatItem.textContent = title;
+                chatItem.addEventListener('click', () => {
+                    setCurrentChat(chat.id);
+                    
+                    // Hide welcome screen, show chat
+                    document.getElementById('welcomeScreen').style.display = 'none';
+                    document.getElementById('chatContainer').style.display = 'block';
+                    document.getElementById('inputArea').style.display = 'block';
+                    
+                    // Close sidebar on mobile
+                    document.getElementById('sidebar').classList.remove('show');
+                    document.getElementById('overlay').classList.remove('show');
+                });
+                
+                chatList.appendChild(chatItem);
+            });
+        }
+
+        // Use example question
+        function useExample(question) {
+            // Create new chat if none exists
+            if (!currentChatId) {
+                createNewChat();
+            }
+            
+            // Set the question in the input field and send
+            const input = document.getElementById('messageInput');
+            input.value = question;
+            sendMessage();
+        }
+
+        // Clear all chats
+        document.getElementById('clearHistoryBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear all chat history? This cannot be undone.')) {
+                chats = {};
+                localStorage.setItem('algorand_chats', JSON.stringify(chats));
+                renderChatList();
+                currentChatId = null;
+                chatHistory = [];
+                
+                // Show welcome screen
+                document.getElementById('welcomeScreen').style.display = 'flex';
+                document.getElementById('chatContainer').style.display = 'none';
+                document.getElementById('inputArea').style.display = 'none';
+            }
+        });
+        function formatMessage(content) {
+    // Ensure we process code blocks first
+    content = content.replace(/```([a-z]*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+    
+    // Then process other markdown elements
+    content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
+    content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    content = content.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    content = content.replace(/\n/g, '<br>');
+    
+    return content;
+}
         function addMessage(content, type) {
+            const chatContainer = document.getElementById('chatContainer');
+            
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = 'message-wrapper';
+            
+            const avatar = document.createElement('div');
+            avatar.className = `message-avatar ${type}-avatar`;
+            avatar.textContent = type === 'user' ? 'U' : 'A';
+            
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}-message`;
-            messageDiv.textContent = content;
-            document.getElementById('chatHistory').appendChild(messageDiv);
+            
+            // Format bot messages with Markdown-like syntax
+            if (type === 'bot') {
+                messageDiv.innerHTML = formatMessage(content);
+            } else {
+                messageDiv.textContent = content;
+            }
+            
+            messageWrapper.appendChild(avatar);
+            messageWrapper.appendChild(messageDiv);
+            chatContainer.appendChild(messageWrapper);
             
             // Scroll to bottom
-            const container = document.getElementById('chatHistory');
-            container.scrollTop = container.scrollHeight;
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
         async function sendMessage() {
             const messageInput = document.getElementById('messageInput');
-            const addressInput = document.getElementById('addressInput');
             const message = messageInput.value.trim();
-            const address = addressInput.value.trim();
 
             if (!message) return;
+            
+            // Create new chat if none exists
+            if (!currentChatId) {
+                createNewChat();
+            }
 
             // Add user message to chat
             addMessage(message, 'user');
+            
+            // Add to chat history
+            chatHistory.push({ role: 'user', content: message });
+            
+            // Reset input height
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+
+            const loadingMessage = 'Thinking...';
+            addMessage(loadingMessage, 'bot');
+            const chatContainer = document.getElementById('chatContainer');
+            const lastMessageElement = chatContainer.lastElementChild.querySelector('.bot-message');
 
             try {
-                const response = await fetch('http://localhost:8000/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        message: message,
-                        address: address || null
-                    })
-                });
 
-                const data = await response.json();
-                addMessage(data.response, 'bot');
+                const response = await simulateAIResponse(message);
+
+                lastMessageElement.innerHTML = formatMessage(response);
+
+                chatHistory.push({ role: 'assistant', content: response });
+
+                chats[currentChatId].messages = chatHistory;
+
+                if (chatHistory.length === 2) {
+                    const chatTitle = message.substring(0, 30) + (message.length > 30 ? '...' : '');
+                    chats[currentChatId].title = chatTitle;
+                    renderChatList();
+                }
+
+                localStorage.setItem('algorand_chats', JSON.stringify(chats));
             } catch (error) {
+                lastMessageElement.innerHTML = 'Sorry, there was an error processing your request. Please try again.';
                 console.error('Error:', error);
-                addMessage('Sorry, there was an error processing your request.', 'bot');
             }
-
-            // Clear input
-            messageInput.value = '';
         }
+
+        document.getElementById('messageInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        async function simulateAIResponse(message) {
+
+            await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+
+            const responses = {
+                'How do I create an ASA using Python?': 
+                `Here's how you can create an Algorand Standard Asset (ASA) using Python:
+
+\`\`\`python
+from algosdk import account, mnemonic
+from algosdk.v2client import algod
+from algosdk.future.transaction import AssetConfigTxn
+
+# Connect to Algorand node
+algod_address = "https://testnet-api.algonode.cloud"
+algod_token = ""
+algod_client = algod.AlgodClient(algod_token, algod_address)
+
+# Create a new account for this transaction
+private_key, address = account.generate_account()
+print(f"Account: {address}")
+print(f"Mnemonic: {mnemonic.from_private_key(private_key)}")
+
+# Get network params
+params = algod_client.suggested_params()
+
+# Asset Creation transaction
+txn = AssetConfigTxn(
+    sender=address,
+    sp=params,
+    total=1000,
+    default_frozen=False,
+    unit_name="MYASA",
+    asset_name="My Test Asset",
+    manager=address,
+    reserve=address,
+    freeze=address,
+    clawback=address,
+    url="https://example.com",
+    decimals=0
+)
+
+# Sign with private key
+signed_txn = txn.sign(private_key)
+
+# Submit the transaction
+try:
+    txid = algod_client.send_transaction(signed_txn)
+    print(f"Successfully sent transaction with ID: {txid}")
+    
+    # Wait for confirmation
+    confirmed_txn = wait_for_confirmation(algod_client, txid, 4)  
+    print(f"Asset ID: {confirmed_txn['asset-index']}")
+except Exception as e:
+    print(f"Error: {e}")
+\`\`\`
+
+You'll need to fund the account with Algos before creating the asset. For testnet, you can use the Algorand testnet dispenser.
+
+Key parameters for your ASA:
+* **total**: Total number of units of this asset
+* **decimals**: Number of decimals for display (0 means whole units)
+* **default_frozen**: Whether accounts need to be unfrozen before receiving this asset
+* **unit_name**: Short name for the asset (max 8 bytes)
+* **asset_name**: Full name of the asset (max 32 bytes)
+* **URL**: URL related to the asset (max 32 bytes)
+* **manager, reserve, freeze, clawback**: Special addresses with privileges`,
+
+                'Explain Algorand\'s consensus mechanism': 
+                `Algorand uses a consensus protocol called **Pure Proof of Stake (PPoS)**, which provides both security and scalability.
+
+Here's how it works:
+
+**1. Block Proposal**: 
+In each round, a single token is randomly selected from the pool of all tokens. The owner of this token becomes the block proposer and creates a candidate block.
+
+**2. Committee Selection**:
+A committee of users is randomly selected to vote on the proposed block. The probability of being selected is proportional to the stake (number of Algos) a user has.
+
+**3. Byzantine Agreement Protocol**:
+Algorand uses a Byzantine Agreement protocol called BA*. Committee members vote on proposals, and when a threshold of votes is reached, the block is confirmed.
+
+**Key advantages:**
+
+* **Speed**: Reaches consensus in seconds
+* **Energy Efficiency**: No mining required
+* **Fork-resistance**: Mathematically proven to never fork
+* **Decentralization**: Anyone with Algos can participate
+* **Security**: Malicious actors can't predict who will be selected for committees
+
+**Cryptographic Sortition**:
+Algorand uses a process called cryptographic sortition to randomly and secretly select users for block proposal and voting. This provides security because:
+
+1. Selection is private until users reveal themselves
+2. Selection can be verified by others
+3. A small number of adversaries can't influence the selection
+
+This mechanism allows Algorand to achieve finality in seconds while maintaining high security and decentralization.`,
+
+                'Help me write a simple PyTeal contract': 
+                `Here's a simple PyTeal contract that implements a basic escrow account. It allows funds to be withdrawn only if:
+1. The transaction is signed by a specific address, or
+2. The current block is after a specific round
+
+\`\`\`python
+from pyteal import *
+
+def approval_program():
+    # Define parameters
+    authorized_address = Addr("PASTE_ADDRESS_HERE")
+    timeout_round = Int(10000000)  # Block round after which anyone can withdraw
+    
+    # Define withdrawal conditions
+    is_authorized = Txn.sender() == authorized_address
+    is_timeout_passed = Global.round() > timeout_round
+    
+    # Basic transaction checks
+    valid_receiver = Txn.receiver() == Global.current_application_address()
+    valid_amount = Txn.amount() > Int(0)
+    valid_type = Txn.type_enum() == TxnType.Payment
+    
+    # Main logic
+    program = Cond(
+        # On creation, approve
+        [Txn.application_id() == Int(0), Return(Int(1))],
+        
+        # On opt-in, approve 
+        [Txn.on_completion() == OnComplete.OptIn, Return(Int(1))],
+        
+        # On closeout, approve
+        [Txn.on_completion() == OnComplete.CloseOut, Return(Int(1))],
+        
+        # On withdraw (NoOp call)
+        [Txn.application_args[0] == Bytes("withdraw"),
+            # Check if authorized OR if timeout has passed
+            Return(And(
+                valid_type,
+                valid_receiver,
+                valid_amount,
+                Or(is_authorized, is_timeout_passed)
+            ))
+        ]
+    )
+    
+    return program
+
+# Compile program to TEAL
+if __name__ == "__main__":
+    compiled = compileTeal(approval_program(), Mode.Application, version=6)
+    print(compiled)
+    
+    with open("escrow.teal", "w") as f:
+        f.write(compiled)
+    print("Written to escrow.teal")
+\`\`\`
+
+To use this contract:
+
+1. Replace <code>PASTE_ADDRESS_HERE</code> with your authorized wallet address
+2. Adjust the <code>timeout_round</code> as needed
+3. Compile the program to TEAL using the Python script
+4. Deploy the contract using the Algorand SDK or algokit
+5. Send funds to the application address
+6. Call the application with "withdraw" argument to get funds back
+
+You'll also need a clear state program:
+
+<pre><code class="python">
+def clear_state_program():
+    return Return(Int(1))
+
+compiled_clear = compileTeal(clear_state_program(), Mode.Application, version=6)
+with open("escrow_clear.teal", "w") as f:
+    f.write(compiled_clear)
+</code></pre>
+
+This is a basic example - real-world contracts would include more validation and error handling.`,
+
+                'How do atomic transfers work in Algorand?': 
+                `**Atomic Transfers** in Algorand allow multiple transactions to be submitted as a single group that either all succeed or all fail.
+
+Here's how they work:
+
+**1. Transaction Grouping**
+Multiple transactions are bundled together in a group. Each transaction in the group is assigned the same group ID, which is calculated from the hashes of all transactions.
+
+**2. All-or-Nothing Execution**
+The entire group is submitted to the network and is treated as a single unit. Either all transactions are processed successfully, or none are processed.
+
+**3. Basic Implementation in Python:**
+
+\`\`\`python
+from algosdk import account, mnemonic
+from algosdk.v2client import algod
+from algosdk.future.transaction import PaymentTxn, AssetTransferTxn, calculate_group_id
+
+# Connect to client
+algod_client = algod.AlgodClient("", "https://testnet-api.algonode.cloud")
+
+# Get network parameters
+params = algod_client.suggested_params()
+
+# Create two transactions
+txn1 = PaymentTxn(
+    sender="SENDER_ADDRESS_1",
+    sp=params,
+    receiver="RECEIVER_ADDRESS_1",
+    amt=1000000  # 1 Algo
+)
+
+txn2 = PaymentTxn(
+    sender="SENDER_ADDRESS_2",
+    sp=params,
+    receiver="RECEIVER_ADDRESS_2",
+    amt=2000000  # 2 Algos
+)
+
+# Assign group ID
+gid = calculate_group_id([txn1, txn2])
+txn1.group = gid
+txn2.group = gid
+
+# Sign transactions
+signed_txn1 = txn1.sign("SENDER_1_PRIVATE_KEY")
+signed_txn2 = txn2.sign("SENDER_2_PRIVATE_KEY")
+
+# Create transaction group
+signed_group = [signed_txn1, signed_txn2]
+
+# Submit group to network
+txid = algod_client.send_transactions(signed_group)
+print(f"Transaction group ID: {txid}")
+\`\`\`
+
+**Common Use Cases:**
+
+1. **Asset Swaps**: Exchange one asset for another between two parties
+2. **Circular Trades**: Enable multiple parties to exchange assets in a circle
+3. **Distributed Exchanges**: Implement order matching without a centralized authority
+4. **Pooled Payments**: Multiple people contributing to a single payment
+5. **Split Payments**: Single payment split among multiple recipients
+
+**Limitations:**
+
+- Maximum of 16 transactions per group
+- All transactions must be submitted together
+- Each transaction must have the same group ID
+- Smart contracts can verify they're part of a specific group
+
+This atomic transfer feature makes Algorand ideal for financial applications requiring transaction atomicity without trusted intermediaries.`
+            };
+
+            // Check for exact matches from our predefined responses
+            if (responses[message]) {
+                return responses[message];
+            }
+            
+            // Simple keyword matching for demo purposes
+            if (message.toLowerCase().includes('asa') || message.toLowerCase().includes('asset')) {
+                return responses['How do I create an ASA using Python?'];
+            } else if (message.toLowerCase().includes('consensus') || message.toLowerCase().includes('ppos')) {
+                return responses['Explain Algorand\'s consensus mechanism'];
+            } else if (message.toLowerCase().includes('contract') || message.toLowerCase().includes('pyteal')) {
+                return responses['Help me write a simple PyTeal contract'];
+            } else if (message.toLowerCase().includes('atomic') || message.toLowerCase().includes('transfer')) {
+                return responses['How do atomic transfers work in Algorand?'];
+            }
+            
+            // Default response
+            return `Thank you for your question about "${message}". As an Algorand development assistant, I can help you with:
+
+1. Writing and debugging smart contracts in TEAL and PyTeal
+2. Creating and managing Algorand Standard Assets (ASAs)
+3. Understanding Algorand's consensus mechanism and blockchain architecture
+4. Working with the Algorand SDKs (Python, JavaScript, Go, Java)
+5. Integrating with Algorand's blockchain
+
+Could you provide more details about what you're trying to accomplish with Algorand?`;
+        }
+
+        // TEAL Compiler Modal functions
+        const tealModal = document.getElementById('tealModal');
+        const closeTealModal = document.getElementById('closeTealModal');
+        const tealCompilerBtn = document.getElementById('tealCompilerBtn');
+
+        tealCompilerBtn.addEventListener('click', function() {
+            tealModal.style.display = 'flex';
+        });
+
+        closeTealModal.addEventListener('click', function() {
+            tealModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', function(event) {
+            if (event.target === tealModal) {
+                tealModal.style.display = 'none';
+            }
+        });
 
         async function compileTEAL() {
             const tealCode = document.getElementById('tealCode').value.trim();
             const compileResult = document.getElementById('compileResult');
-
+            
             if (!tealCode) {
-                compileResult.innerHTML = 'Please enter TEAL code';
+                compileResult.innerHTML = '<span style="color: #FF6B6B;">Please enter TEAL code to compile.</span>';
                 return;
             }
-
+            
+            // In a real app, this would make an API call to Algorand's API or a backend service
+            // For this demo, we're simulating compilation with a delay
+            compileResult.innerHTML = '<span style="color: var(--text-secondary);">Compiling...</span>';
+            
             try {
-                const response = await fetch('http://localhost:8000/compile-teal', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ teal_code: tealCode })
-                });
-
-                const data = await response.json();
+                // Simulate network delay
+                await new Promise(resolve => setTimeout(resolve, 1500));
                 
-                if (response.ok) {
-                    compileResult.innerHTML = `
-                        <h3 style="color: var(--algorand-teal);">Compilation Successful</h3>
-                        <p><strong>Hash:</strong> ${data.hash}</p>
-                        <p><strong>Bytecode:</strong> ${data.bytecode}</p>
-                    `;
-                } else {
-                    compileResult.innerHTML = `<p style="color: #ff4444;">Compilation failed: ${data.detail}</p>`;
+                // Simple validation (not a real compiler)
+                if (tealCode.includes('error') || tealCode.includes('Error')) {
+                    throw new Error('Compilation failed: Syntax error detected');
                 }
+                
+                compileResult.innerHTML = `
+                    <div style="color: #00C9C9; margin-bottom: 0.5rem;">✓ Compilation successful!</div>
+                    <div style="color: var(--text-secondary); margin-bottom: 0.5rem;">Program hash: ${generateRandomHash()}</div>
+                    <div style="color: var(--text-secondary);">Estimated cost: ${Math.floor(Math.random() * 10) + 5} microAlgos</div>
+                `;
             } catch (error) {
-                console.error('Error:', error);
-                compileResult.innerHTML = `<p style="color: #ff4444;">Error: Could not compile TEAL code</p>`;
+                compileResult.innerHTML = `<span style="color: #FF6B6B;">${error.message}</span>`;
             }
         }
 
-        // Add keyboard support
-        document.getElementById('messageInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();  // Prevent default enter behavior
-        sendMessage();
-    }
-});
+        function generateRandomHash() {
+            const chars = '0123456789abcdef';
+            let hash = '';
+            for (let i = 0; i < 64; i++) {
+                hash += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return hash;
+        }
+
+        // Initialize the UI
+        renderChatList();
+
+        // Check if we have any existing chats
+        if (Object.keys(chats).length > 0) {
+            // Set the most recent chat
+            const mostRecentChat = Object.values(chats).sort((a, b) => 
+                new Date(b.created) - new Date(a.created)
+            )[0];
+            
+            setCurrentChat(mostRecentChat.id);
+            
+            // Show chat container
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('chatContainer').style.display = 'block';
+            document.getElementById('inputArea').style.display = 'block';
+        }
     </script>
 </body>
 </html>
