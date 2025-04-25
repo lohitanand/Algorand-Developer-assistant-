@@ -1,6 +1,8 @@
 import os
 import logging
 import traceback
+import json
+import httpx
 from typing import List, Dict, Any, Optional
 from functools import lru_cache
 from datetime import datetime
@@ -9,8 +11,9 @@ from contextlib import asynccontextmanager
 import algosdk
 from algosdk.v2client import algod
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, HTTPException, Request, Depends, Query
 from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -75,8 +78,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Use a relative path for static files (ensures portability)
-app.mount("/static", StaticFiles(directory=r"C:\Users\mail2\OneDrive\Documents\GitHub\Algo-assistant-lohit\Static"), name="static")
+static_path = Path("C:/Users/mail2/OneDrive/Documents/GitHub/Algo-assistant-lohit/Static")
+app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 # Enable CORS
 app.add_middleware(
@@ -93,6 +96,9 @@ class ChatRequest(BaseModel):
     history: List[Dict[str, str]] = Field(
         default_factory=list, description="Chat history (optional)"
     )
+    web_search: bool = Field(
+        default=False, description="Enable web search for up-to-date information"
+    )
 
 class TealCodeRequest(BaseModel):
     code: str = Field(..., description="TEAL code to compile")
@@ -103,6 +109,14 @@ class AlgorandTransaction(BaseModel):
     amount: int = Field(..., description="Transaction amount in microAlgos")
     note: Optional[str] = Field(None, description="Optional note for the transaction")
 
+class WebSearchRequest(BaseModel):
+    query: str = Field(..., description="Search query")
+    num_results: int = Field(default=5, description="Number of search results to retrieve")
+
+class WebSearchResult(BaseModel):
+    title: str
+    link: str
+    snippet: str
 
 # Global variables for caching
 ALGORAND_DOCS = [
@@ -202,32 +216,45 @@ def normalize_query(query: str) -> str:
     return query
 
 def match_knowledge_base(query: str) -> Optional[str]:
-    """Match a normalized query against the knowledge base with improved matching"""
+    """Match a normalized query against the knowledge base with better matching logic"""
     normalized = normalize_query(query)
+    logger.info(f"Matching normalized query: '{normalized}'")
     
-    # Direct matches
-    if normalized in ALGORAND_KNOWLEDGE_BASE:
-        return ALGORAND_KNOWLEDGE_BASE[normalized]
+    # Direct match check
+    for key in ALGORAND_KNOWLEDGE_BASE:
+        if normalized == key:
+            logger.info(f"Direct match found: '{key}'")
+            return ALGORAND_KNOWLEDGE_BASE[key]
     
-    # Check for key phrases/words - more flexible matching
+    # Partial match check - ensure that the entire key is within the query
+    for key in ALGORAND_KNOWLEDGE_BASE:
+        if key in normalized:
+            logger.info(f"Partial match found: '{key}'")
+            return ALGORAND_KNOWLEDGE_BASE[key]
+    
+    # Flexible phrase matching
     key_phrases = {
         "what is algorand": ["what is algorand", "what's algorand", "tell me about algorand", 
-                           "algorand is", "explain algorand", "describe algorand"],
+                           "algorand is", "explain algorand", "describe algorand", "info algorand"],
         "algorand history": ["algorand history", "history of algorand", "when was algorand", 
                            "algorand timeline", "algorand founded", "algorand creation"],
         "algorand consensus": ["algorand consensus", "algorand pos", "algorand proof of stake",
                              "how does algorand work", "algorand mechanism"]
     }
     
-    # Check each key phrase for a match
+    # Check for keyword matches
     for kb_key, phrases in key_phrases.items():
-        if any(phrase in normalized for phrase in phrases):
-            return ALGORAND_KNOWLEDGE_BASE[kb_key]
+        for phrase in phrases:
+            if phrase in normalized:
+                logger.info(f"Phrase match found: '{phrase}' for key '{kb_key}'")
+                return ALGORAND_KNOWLEDGE_BASE[kb_key]
     
-    # Very basic check for just "algorand" by itself
+    # Just "algorand" by itself
     if normalized == "algorand":
+        logger.info("Single word 'algorand' match")
         return ALGORAND_KNOWLEDGE_BASE["what is algorand"]
-        
+    
+    logger.info("No match found in knowledge base")
     return None
 
 def categorize_query(query: str) -> str:
@@ -248,6 +275,102 @@ def categorize_query(query: str) -> str:
         return "technical"
     else:
         return "general"
+
+async def search_web(query: str, num_results: int = 5) -> List[Dict[str, str]]:
+    """Search the web for up-to-date information using Serper Google Search API."""
+    try:
+        # Get API key from environment variables
+        api_key = os.getenv("SERPER_API_KEY")
+        if not api_key:
+            logger.error("SERPER_API_KEY environment variable not set")
+            return []
+        
+        # Add "Algorand" to the query if it's not already there
+        if "algorand" not in query.lower():
+            search_query = f"Algorand {query}"
+        else:
+            search_query = query
+        
+        # Create search parameters
+        payload = {
+            "q": search_query,
+            "num": num_results
+        }
+        
+        # Make request to Serper API
+        async with httpx.AsyncClient(timeout=30.0) as client:  # Increased timeout
+            response = await client.post(
+                "https://google.serper.dev/search",
+                headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
+                json=payload
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"Search API error: {response.status_code} - {response.text}")
+                return []
+            
+            data = response.json()
+            logger.debug(f"Received search data: {json.dumps(data)[:200]}...")  # Log part of the response
+            
+            # Extract organic search results
+            results = []
+            if "organic" in data:
+                for item in data["organic"][:num_results]:
+                    results.append({
+                        "title": item.get("title", ""),
+                        "link": item.get("link", ""),
+                        "snippet": item.get("snippet", "")
+                    })
+            else:
+                logger.warning("No 'organic' field in search results")
+                logger.debug(f"Keys in response: {data.keys()}")
+            
+            return results
+            
+    except Exception as e:
+        logger.error(f"Error during web search: {str(e)}")
+        logger.error(traceback.format_exc())
+        return []
+
+async def fetch_web_content(url: str) -> Optional[str]:
+    """Fetch content from a web page."""
+    try:
+        # Add a timeout for the request
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(url)
+            if response.status_code != 200:
+                logger.error(f"Error fetching {url}: HTTP {response.status_code}")
+                return None
+                
+            # Use a simple extraction method first
+            html_content = response.text
+            
+            # Use BeautifulSoup for basic text extraction
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(html_content, 'html.parser')
+            
+            # Remove script and style elements
+            for script in soup(["script", "style"]):
+                script.extract()
+                
+            # Get text
+            text = soup.get_text()
+            
+            # Break into lines and remove leading and trailing space
+            lines = (line.strip() for line in text.splitlines())
+            # Break multi-headlines into a line each
+            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+            # Drop blank lines
+            text = '\n'.join(chunk for chunk in chunks if chunk)
+            
+            # Limit the length
+            if len(text) > 3000:
+                text = text[:3000] + "..."
+                
+            return text
+    except Exception as e:
+        logger.error(f"Error fetching content from {url}: {str(e)}")
+        return None
 
 @lru_cache(maxsize=1)
 def get_algod_client():
@@ -322,9 +445,13 @@ def setup_vector_store():
         
         # FORCE REGENERATION FOR TESTING (remove this for production)
         if os.path.exists(vector_store_path):
-            import shutil
-            shutil.rmtree(vector_store_path)
-            logger.info(f"Deleted existing vector store at {vector_store_path} to force refresh")
+            try:
+                vector_store = FAISS.load_local(vector_store_path, get_embeddings())
+                logger.info(f"Loaded existing FAISS vector store from {vector_store_path}")
+                return vector_store
+            except Exception as e:
+                logger.warning(f"Failed to load existing vector store: {str(e)}")
+                logger.info("Will create a new vector store")
         
         # Load documents from URLs
         documents = []
@@ -363,7 +490,7 @@ def setup_vector_store():
         raise
 
 
-def create_prompt_template(query: str, query_type: str, context: str = "", history: List[Dict[str, str]] = None) -> str:
+def create_prompt_template(query: str, query_type: str, context: str = "", web_search_results: List[Dict[str, str]] = None, history: List[Dict[str, str]] = None) -> str:
     """Create an optimized prompt template for Gemini 1.5 Flash based on query type"""
     
     # Format chat history if provided
@@ -374,6 +501,15 @@ def create_prompt_template(query: str, query_type: str, context: str = "", histo
                 history_text += f"Human: {msg.get('content')}\n"
             elif msg.get("role") == "assistant":
                 history_text += f"Assistant: {msg.get('content')}\n"
+    
+    # Format web search results if provided
+    web_search_text = ""
+    if web_search_results and len(web_search_results) > 0:
+        web_search_text = "WEB SEARCH RESULTS:\n"
+        for i, result in enumerate(web_search_results):
+            web_search_text += f"[{i+1}] Title: {result.get('title')}\n"
+            web_search_text += f"URL: {result.get('link')}\n"
+            web_search_text += f"Snippet: {result.get('snippet')}\n\n"
     
     # Base system instruction
     system_instruction = """You are AlgoAssist, an Algorand blockchain specialist with comprehensive knowledge about the Algorand ecosystem."""
@@ -388,6 +524,7 @@ INSTRUCTIONS:
 - Explain Algorand's core concepts, history, and unique value proposition
 - Use headers and well-structured explanations
 - Cover key points before details
+- Use web search results when available for up-to-date information
 - Don't list technical services you can provide unless specifically asked
 """
     elif query_type == "technical":
@@ -398,6 +535,7 @@ INSTRUCTIONS:
 - Explain code and technical concepts thoroughly
 - Reference official documentation when relevant
 - Be specific rather than general in technical advice
+- Use web search results when available for current development practices
 - Provide step-by-step instructions for complex processes
 """
     else:  # general
@@ -407,12 +545,15 @@ INSTRUCTIONS:
 - Balance informational content with practical guidance
 - Determine if the query needs educational content, technical help, or both
 - For mixed queries, provide education first, then technical assistance
+- Use web search results when available for current information
 - Be conversational but precise in your response
 """
     
     # Create the prompt with improved system instruction
     prompt = f"""
 {system_instruction}
+
+{web_search_text}
 
 CONTEXT INFORMATION:
 {context}
@@ -438,15 +579,15 @@ async def chat_endpoint(request: ChatRequest):
     try:
         query = request.query
         history = request.history
+        web_search_enabled = request.web_search
         
-        logger.info(f"Received query: '{query}'")
-
-        if query.lower().strip() == "what is algorand":
-            logger.info("Direct match for 'what is algorand' query detected")
+        logger.info(f"Received query: '{query}', web_search: {web_search_enabled}")
+        kb_response = None
+        if not web_search_enabled:
+            kb_response = match_knowledge_base(query)
+            logger.info(f"Knowledge base match result: {'FOUND' if kb_response else 'NOT FOUND'}")
         
-        # First check if this matches our knowledge base
-        kb_response = match_knowledge_base(query)
-        if kb_response:
+        if kb_response and not web_search_enabled:
             logger.info("Found match in knowledge base")
             return {
                 "response": kb_response,
@@ -454,7 +595,33 @@ async def chat_endpoint(request: ChatRequest):
                 "source": "knowledge_base",
             }
         else:
-            logger.info("No match found in knowledge base")
+            logger.info("No match found in knowledge base or web search is enabled")
+        web_search_results = []
+        if web_search_enabled:
+            logger.info("Web search enabled, fetching search results...")
+            web_search_results = await search_web(query)
+            logger.info(f"Retrieved {len(web_search_results)} search results")
+            
+            # Check if we have actual results
+            if not web_search_results:
+                logger.warning("Web search returned no results")
+            
+            # For the first three results, try to fetch their content
+            valid_content_count = 0
+            for i, result in enumerate(web_search_results[:3]):
+                try:
+                    content = await fetch_web_content(result["link"])
+                    if content:
+                        # Truncate content if it's too long
+                        if len(content) > 2000:
+                            content = content[:2000] + "..."
+                        web_search_results[i]["content"] = content
+                        valid_content_count += 1
+                        logger.info(f"Added content for search result {i+1}")
+                except Exception as e:
+                    logger.error(f"Error fetching content for result {i+1}: {str(e)}")
+            
+            logger.info(f"Successfully fetched content for {valid_content_count} out of {min(3, len(web_search_results))} results")
         
         # Categorize the query
         query_type = categorize_query(query)
@@ -481,22 +648,36 @@ async def chat_endpoint(request: ChatRequest):
             source = doc.metadata.get("source", f"Source {i+1}")
             context_parts.append(f"[{source}]\n{doc.page_content.strip()}")
         
+        # If web search results have content, add it to context
+        for i, result in enumerate(web_search_results):
+            if "content" in result:
+                context_parts.append(f"[Web Result {i+1}: {result['title']}]\n{result['content'].strip()}")
+        
         # Join with clear separation
         context = "\n\n---\n\n".join(context_parts)
         
-        # Create the prompt with context and history
-        prompt = create_prompt_template(query, query_type, context, history)
+        # Create the prompt with context, web search results, and history
+        prompt = create_prompt_template(query, query_type, context, web_search_results, history)
         
         # Generate response using LLM
         llm = get_llm()
         response = llm.invoke(prompt)
-        
+        if not response or not response.content:
+            if "what is algorand" in normalize_query(query):
+                logger.info("Using fallback for 'what is algorand' query")
+                return {
+                    "response": ALGORAND_KNOWLEDGE_BASE["what is algorand"],
+                    "timestamp": datetime.now().isoformat(),
+                    "source": "knowledge_base_fallback",
+                }    
         # Return response with metadata
         return {
             "response": response.content,
             "timestamp": datetime.now().isoformat(),
             "source_count": len(relevant_docs),
-            "query_type": query_type
+            "query_type": query_type,
+            "web_search_used": web_search_enabled,
+            "web_search_count": len(web_search_results) if web_search_enabled else 0
         }
     
     except Exception as e:
@@ -504,6 +685,31 @@ async def chat_endpoint(request: ChatRequest):
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
     
+        
+
+@app.post("/web-search")
+async def web_search_endpoint(request: WebSearchRequest):
+    """Standalone endpoint for web search only."""
+    try:
+        query = request.query
+        num_results = request.num_results
+        
+        logger.info(f"Received web search request: '{query}', num_results: {num_results}")
+        
+        results = await search_web(query, num_results)
+        
+        return {
+            "results": results,
+            "timestamp": datetime.now().isoformat(),
+            "count": len(results)
+        }
+    
+    except Exception as e:
+        logger.error(f"Error in web search endpoint: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)},
+        )
 
 @app.post("/compile-teal")
 async def compile_teal_endpoint(request: TealCodeRequest):
@@ -566,6 +772,71 @@ async def account_info(address: str):
             status_code=400,
             content={"error": str(e)},
         )
+    
+@app.get("/debug/search")
+async def debug_search(query: str = Query(..., description="Search query to test")):
+    """Debug endpoint to test web search functionality."""
+    try:
+        results = await search_web(query, 3)
+        
+        # Try to fetch content for the first result
+        content = None
+        if results:
+            content = await fetch_web_content(results[0]["link"])
+        
+        return {
+            "query": query,
+            "results_count": len(results),
+            "results": results,
+            "first_result_content_sample": content[:200] + "..." if content else None,
+            "serper_api_key_set": bool(os.getenv("SERPER_API_KEY"))
+        }
+    except Exception as e:
+        logger.error(f"Error in debug search: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e), "traceback": traceback.format_exc()},
+        )
+    
+@app.get("/debug/check-config")
+async def check_config():
+    """Debug endpoint to check configuration."""
+    return {
+        "serper_api_key_set": bool(os.getenv("SERPER_API_KEY")),
+        "google_api_key_set": bool(os.getenv("GOOGLE_API_KEY")),
+        "algod_address": os.getenv("ALGOD_ADDRESS", "https://testnet-api.algonode.cloud"),
+        "algod_token_set": bool(os.getenv("ALGOD_TOKEN")),
+        "vector_store_exists": os.path.exists("algorand_faiss_index")
+    }
+
+@app.get("/debug/knowledge-base")
+async def debug_knowledge_base(query: str = Query(..., description="Query to test against knowledge base")):
+    """Debug endpoint to test knowledge base matching."""
+    raw_query = query
+    normalized = normalize_query(query)
+    match = match_knowledge_base(query)
+    
+    # Test each key phrase matching explicitly
+    key_phrase_matches = {}
+    for key in ALGORAND_KNOWLEDGE_BASE:
+        key_phrase_matches[key] = key in normalized
+    
+    # Print test for specific expected cases
+    basic_tests = {
+        "what is algorand": normalize_query("what is algorand") == "what is algorand",
+        "what is algorand in normalized": "what is algorand" in normalized,
+        "normalized in what is algorand": normalized in "what is algorand",
+    }
+    
+    return {
+        "raw_query": raw_query,
+        "normalized_query": normalized,
+        "match_found": match is not None,
+        "key_phrase_matches": key_phrase_matches,
+        "basic_tests": basic_tests,
+        "response_preview": match[:200] + "..." if match else None,
+        "knowledge_base_keys": list(ALGORAND_KNOWLEDGE_BASE.keys())
+    }
 
 if __name__ == "__main__":
     import uvicorn
